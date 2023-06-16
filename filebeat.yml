@@ -1,8 +1,10 @@
 filebeat.inputs:
 - type: log
+  enabled: true
   paths:
     - /var/log/nginx/access.log
+  fields:
+    log_type: nginx
 
-output.kafka:
-  hosts: ["kafka:9092"]
-  topic: "nginx-logs"
+output.logstash:
+  hosts: ["logstash:5044"]
