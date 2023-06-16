@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 services:
   nginx:
     image: nginx:latest
@@ -15,26 +15,27 @@ services:
       - ./logs:/var/log/nginx
     depends_on:
       - nginx
-
-  kafka:
-    image: confluentinc/cp-kafka:6.2.0
-    ports:
-      - 9092:9092
+      - logstash
 
   logstash:
     image: docker.elastic.co/logstash/logstash:7.15.1
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logs:/var/log/nginx # Added volume for Logstash
+    depends_on:
+      - nginx
     environment:
       - LOGS_TOPIC=nginx-logs
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-    depends_on:
-      - kafka
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.15.1
     environment:
       - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.15.1
@@ -42,3 +43,9 @@ services:
       - 5601:5601
     depends_on:
       - elasticsearch
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+volumes:
+  elasticsearch_data:
+
